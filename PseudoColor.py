@@ -4,8 +4,8 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
+import cv2
 import os
-import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from PIL import Image
@@ -26,40 +26,32 @@ if os.path.exists(file_path):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    X = np.arange(0, 280, 1)
-    Y = np.arange(0, 280, 1)
-    X, Y = np.meshgrid(X, Y)
-    image = Image.open(file_path)
+    images = Image.open(file_path)
 
     # Resize the image to the target size (224x224)
-    image = image.resize((280, 280))
+    # image = image.resize((280, 280))
+    image = cv2.imread(file_path)
+    image = cv2.resize(image, (320, 280))
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Convert the image to a NumPy array
-    image_array = np.array(image)
-    # 遍历图像中的每个像素，并打印它们的RGB值
-    for i in range(image_array.shape[0]):
-        for j in range(image_array.shape[1]):
-            pixel_rgb = image_array[i, j]
-            print(f"Pixel at ({i}, {j}): R={pixel_rgb[0]}, G={pixel_rgb[1]}, B={pixel_rgb[2]}")
+    image_array = np.array(images)
 
     colors = image_array / 255
 
-    # Convert the image to grayscale (1 channel)
-    Z = np.array(image.convert('L'))
+    X = np.arange(0, 320, 1)
+    Y = np.arange(0, 280, 1)
+    X, Y = np.meshgrid(X, Y)
+    H, S, V = cv2.split(hsv_image)
+    Z = H
 
-    surf = ax.plot_surface(X, -Y, Z, facecolors=colors, cmap="rainbow", linewidth=0, antialiased=False)
+    # Convert the image to grayscale (1 channel)
+
+    surf = ax.plot_surface(X, -Y, -Z, facecolors=colors, cmap="rainbow", linewidth=0, antialiased=False)
 
     ax.set_zlim(np.min(Z), np.max(Z))
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-    # # 隐藏X、Y、Z轴上的数值
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([])
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
 
     fig.colorbar(surf, shrink=0.5, aspect=5)
     plt.show()
