@@ -1,3 +1,5 @@
+import sys
+
 import matplotlib
 
 matplotlib.use("TkAgg")
@@ -26,35 +28,39 @@ if os.path.exists(file_path):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    images = Image.open(file_path)
+    try:
+        images = Image.open(file_path)
+        # Resize the image to the target size (224x224)
+        # image = image.resize((280, 280))
+        # image = cv2.imread(file_path)
+        # 如果存在中文路径
+        image = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), -1)
+        # image = cv2.resize(image, (320, 280))
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # Convert the image to a NumPy array
+        image_array = np.array(images)
 
-    # Resize the image to the target size (224x224)
-    # image = image.resize((280, 280))
-    image = cv2.imread(file_path)
-    image = cv2.resize(image, (320, 280))
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        colors = image_array / 255
 
-    # Convert the image to a NumPy array
-    image_array = np.array(images)
+        X = np.arange(0, 326, 1)
+        Y = np.arange(0, 284, 1)
+        X, Y = np.meshgrid(X, Y)
+        H, S, V = cv2.split(hsv_image)
+        Z = H
 
-    colors = image_array / 255
+        # Convert the image to grayscale (1 channel)
 
-    X = np.arange(0, 320, 1)
-    Y = np.arange(0, 280, 1)
-    X, Y = np.meshgrid(X, Y)
-    H, S, V = cv2.split(hsv_image)
-    Z = H
+        surf = ax.plot_surface(X, -Y, -Z, facecolors=colors, cmap="rainbow", linewidth=0, antialiased=False)
 
-    # Convert the image to grayscale (1 channel)
+        ax.set_zlim(np.min(Z), np.max(Z))
+        ax.zaxis.set_major_locator(LinearLocator(10))
+        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
-    surf = ax.plot_surface(X, -Y, -Z, facecolors=colors, cmap="rainbow", linewidth=0, antialiased=False)
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+        plt.show()
 
-    ax.set_zlim(np.min(Z), np.max(Z))
-    ax.zaxis.set_major_locator(LinearLocator(10))
-    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-    plt.show()
+    except Exception as errorMsg:
+        messagebox.showinfo('产生错误了', "%s" % errorMsg)
 
 else:
     messagebox.showwarning("警告", "未能正确找到图像！")
